@@ -887,3 +887,108 @@ img {
 .project-card:nth-child(4) { transition-delay: 0.24s; }
 .project-card:nth-child(5) { transition-delay: 0.32s; }
 .project-card:nth-child(6) { transition-delay: 0.40s; }
+
+
+/* ─── WALLET INFO CARD (FLOATING) ─── */
+.wallet-info-card {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 280px;
+    background: rgba(18, 18, 31, 0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(0, 240, 255, 0.15);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
+                0 0 24px rgba(0, 240, 255, 0.05);
+    padding: 20px;
+    z-index: 99;
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+    pointer-events: none;
+    transition: opacity 0.4s var(--ease-out),
+                transform 0.4s var(--ease-out),
+                border-color var(--duration);
+}
+
+.wallet-info-card.visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: all;
+}
+
+.wallet-info-card.is-holder {
+    border-color: rgba(57, 255, 20, 0.25);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
+                0 0 24px rgba(57, 255, 20, 0.08);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+}
+
+.card-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-primary);
+}
+
+.btn-card-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 4px;
+    transition: color 0.2s;
+}
+
+.btn-card-close:hover {
+    color: var(--neon-magenta);
+}
+
+.wallet-stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.88rem;
+    margin-bottom: 10px;
+}
+
+.wallet-stat-row:last-child {
+    margin-bottom: 0;
+}
+
+.stat-lbl {
+    color: var(--text-secondary);
+}
+
+.stat-val {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.stat-val.text-neon {
+    color: var(--neon-cyan);
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .wallet-info-card {
+        bottom: 16px;
+        right: 16px;
+        left: 16px;
+        width: auto;
+    }
+}
+

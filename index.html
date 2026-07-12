@@ -251,6 +251,32 @@
         </div>
     </footer>
 
+    <!-- Tarjeta Flotante de Wallet -->
+    <div id="walletInfoCard" class="wallet-info-card">
+        <div class="card-header">
+            <span class="card-title">🦊 Estado Wallet</span>
+            <button id="btnCloseWalletCard" class="btn-card-close" aria-label="Cerrar tarjeta">&times;</button>
+        </div>
+        <div class="card-body">
+            <div class="wallet-stat-row">
+                <span class="stat-lbl">Red:</span>
+                <span class="stat-val text-neon">Ronin Network</span>
+            </div>
+            <div class="wallet-stat-row">
+                <span class="stat-lbl">Balance:</span>
+                <span id="cardBalance" class="stat-val">0.00 RON</span>
+            </div>
+            <div class="wallet-stat-row">
+                <span class="stat-lbl">OG Rats:</span>
+                <span id="cardRatsCount" class="stat-val">0</span>
+            </div>
+            <div class="wallet-stat-row">
+                <span class="stat-lbl">Ronkeverse:</span>
+                <span id="cardRonkeCount" class="stat-val">0</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <script src="app.js"></script>

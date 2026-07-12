@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════
    RATONKE HUB — App Logic
-   Sprint 1: Conexión de Ronin Wallet + Animaciones
+   Sprint 1: Conexión de Ronin Wallet + Tarjeta Flotante
    ═══════════════════════════════════════════════ */
 
 (function () {
@@ -9,12 +9,21 @@
     // ─── Estado Web3 Global ───
     let userAddress = null;
     let userBalance = null;
+    let ogRatsCount = 0;
+    let ronkeverseCount = 0;
     let isHolder = false;
 
     // ─── Elementos DOM ───
     const btnConnectWallet = document.getElementById('btnConnectWallet');
     const navToggle = document.getElementById('navToggle');
     const navLinks = document.getElementById('navLinks');
+    
+    // Elementos de la Tarjeta Flotante
+    const walletInfoCard = document.getElementById('walletInfoCard');
+    const btnCloseWalletCard = document.getElementById('btnCloseWalletCard');
+    const cardBalance = document.getElementById('cardBalance');
+    const cardRatsCount = document.getElementById('cardRatsCount');
+    const cardRonkeCount = document.getElementById('cardRonkeCount');
 
     // ─── Mobile Nav Toggle ───
     if (navToggle && navLinks) {
@@ -94,22 +103,23 @@
 
     // ─── LÓGICA WEB3 (RONIN WALLET) ───
 
-    const CONTRACT_ADDRESS = "0x953e34637cc596b8195eb7fb83305402d3b9d000"; // Contrato OG Rats
-    const CONTRACT_ABI = ["function balanceOf(address owner) view returns (uint256)"];
+    const OGRATS_CONTRACT = "0x953e34637cc596b8195eb7fb83305402d3b9d000"; 
+    const RONKEVERSE_CONTRACT = "0x810b42d75150824b2253b2161a09d3753a1de019"; 
+    const ERC721_ABI = ["function balanceOf(address owner) view returns (uint256)"];
 
     function shortAddress(addr) {
         if (!addr) return "";
         return addr.slice(0, 6) + "..." + addr.slice(-4);
     }
 
-    async function checkHoldings(address, provider) {
+    async function queryNFTCount(contractAddress, userAddress, provider) {
         try {
-            const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
-            const nftCount = await contract.balanceOf(address);
-            return Number(nftCount) > 0;
+            const contract = new ethers.Contract(contractAddress, ERC721_ABI, provider);
+            const count = await contract.balanceOf(userAddress);
+            return Number(count);
         } catch (err) {
-            console.error("Error al consultar balance de NFTs:", err);
-            return false;
+            console.error(`Error consultando contrato ${contractAddress}:`, err);
+            return 0;
         }
     }
 
@@ -120,26 +130,38 @@
         const icon = btnConnectWallet.querySelector('.wallet-icon');
 
         if (userAddress) {
-            // Estado conectado
             label.textContent = shortAddress(userAddress);
-            icon.textContent = "🦊"; // Cambiamos el icono a conectado
-
+            icon.textContent = "🦊";
             btnConnectWallet.classList.add('wallet-connected');
 
-            // Ajustar visual de holders
+            // Determinar si es holder de cualquiera de las dos colecciones
+            isHolder = (ogRatsCount > 0 || ronkeverseCount > 0);
+
             if (isHolder) {
                 btnConnectWallet.classList.add('is-holder');
-                icon.textContent = "👑"; // Icono de holder coronado
+                icon.textContent = "👑";
                 label.textContent = `${shortAddress(userAddress)} (Holder)`;
             } else {
                 btnConnectWallet.classList.remove('is-holder');
             }
+
+            // Actualizar y mostrar Tarjeta Flotante
+            if (cardBalance) cardBalance.textContent = `${parseFloat(userBalance).toFixed(3)} RON`;
+            if (cardRatsCount) cardRatsCount.textContent = ogRatsCount;
+            if (cardRonkeCount) cardRonkeCount.textContent = ronkeverseCount;
+
+            if (walletInfoCard) {
+                walletInfoCard.classList.add('visible');
+            }
         } else {
-            // Estado desconectado
             label.textContent = "Conectar Ronin";
             icon.textContent = "🔌";
             btnConnectWallet.classList.remove('wallet-connected');
             btnConnectWallet.classList.remove('is-holder');
+
+            if (walletInfoCard) {
+                walletInfoCard.classList.remove('visible');
+            }
         }
     }
 
@@ -152,16 +174,18 @@
         try {
             const provider = new ethers.BrowserProvider(window.ronin.provider);
             
-            // Si ya estamos conectados y hacemos clic, desconectamos (toggle de sesión simple)
             if (userAddress) {
+                // Desconectar
                 userAddress = null;
                 userBalance = null;
+                ogRatsCount = 0;
+                ronkeverseCount = 0;
                 isHolder = false;
                 updateWalletUI();
                 return;
             }
 
-            // Solicitar cuentas
+            // Solicitar conexión
             const accounts = await provider.send("eth_requestAccounts", []);
             userAddress = accounts[0];
 
@@ -169,8 +193,9 @@
             const balanceWei = await provider.getBalance(userAddress);
             userBalance = ethers.formatEther(balanceWei);
 
-            // Verificar si tiene NFTs de OG Rats
-            isHolder = await checkHoldings(userAddress, provider);
+            // Cargar colecciones
+            ogRatsCount = await queryNFTCount(OGRATS_CONTRACT, userAddress, provider);
+            ronkeverseCount = await queryNFTCount(RONKEVERSE_CONTRACT, userAddress, provider);
 
             updateWalletUI();
         } catch (error) {
@@ -178,7 +203,6 @@
         }
     }
 
-    // Comprobar si ya hay cuentas autorizadas previamente
     async function checkConnectionOnLoad() {
         if (window.ronin) {
             try {
@@ -188,7 +212,10 @@
                     userAddress = accounts[0];
                     const balanceWei = await provider.getBalance(userAddress);
                     userBalance = ethers.formatEther(balanceWei);
-                    isHolder = await checkHoldings(userAddress, provider);
+
+                    ogRatsCount = await queryNFTCount(OGRATS_CONTRACT, userAddress, provider);
+                    ronkeverseCount = await queryNFTCount(RONKEVERSE_CONTRACT, userAddress, provider);
+
                     updateWalletUI();
                 }
             } catch (err) {
@@ -201,7 +228,14 @@
         btnConnectWallet.addEventListener('click', handleWalletConnection);
     }
 
-    // Inicializar estados iniciales al cargar la página
+    if (btnCloseWalletCard) {
+        btnCloseWalletCard.addEventListener('click', function() {
+            if (walletInfoCard) {
+                walletInfoCard.classList.remove('visible');
+            }
+        });
+    }
+
     window.addEventListener('load', checkConnectionOnLoad);
 
 })();
