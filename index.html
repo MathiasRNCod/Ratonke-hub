@@ -218,13 +218,14 @@
         <section class="section-leaderboard" id="leaderboard">
             <div class="container">
                 <h2 class="section-title">Ranking OG Rats</h2>
-                <p class="section-desc">Puntaje dinámico calculado en tiempo real. ¡Conectá tu wallet y competí!</p>
+                <p class="section-desc">Ranking de holders en tiempo real. ¡Conectá tu wallet y compará tus posiciones!</p>
                 
                 <div class="leaderboard-wrapper">
                     <!-- Buscador -->
                     <div class="leaderboard-search">
                         <input type="text" id="leaderboardSearchInput" placeholder="🔍 Buscar wallet: 0x... o ronin:..." maxlength="66">
                         <button id="btnSearchLeaderboard" class="btn btn-primary">Buscar</button>
+                        <button id="btnRefreshLeaderboard" class="btn btn-ghost" title="Actualizar datos desde la blockchain">🔄 Actualizar</button>
                     </div>
 
                     <!-- Favoritos -->
@@ -248,8 +249,6 @@
                                     <th>Puesto</th>
                                     <th>Billetera</th>
                                     <th>Rats</th>
-                                    <th>Puntos</th>
-                                    <th>Acción</th>
                                 </tr>
                             </thead>
                             <tbody id="leaderboardBody">

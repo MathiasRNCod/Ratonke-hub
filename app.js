@@ -248,45 +248,56 @@
     }
 
 
-    // ─── LÓGICA DE CÁLCULO DE PUNTOS Y LEADERBOARD ───
+    // ─── LÓGICA DE ACTUALIZACIÓN EN TIEMPO REAL Y LEADERBOARD ───
 
-    function getElapsedHours() {
-        return Math.max(0, (Date.now() - LAUNCH_TIMESTAMP) / (1000 * 60 * 60));
+    async function fetchLiveHolders() {
+        const targetUrl = `https://explorer.roninchain.com/api/v2/tokens/${OGRATS_CONTRACT}/holders`;
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+        
+        try {
+            const res = await fetch(proxyUrl);
+            if (!res.ok) throw new Error("CORS Proxy Failure");
+            
+            const json = await res.json();
+            const data = JSON.parse(json.contents);
+            
+            if (data && data.items) {
+                return data.items.map(item => ({
+                    wallet: item.address.hash.toLowerCase(),
+                    rats: Number(item.value)
+                }));
+            }
+        } catch (e) {
+            console.error("Fallo al traer holders en vivo desde el explorador:", e);
+        }
+        return null;
     }
 
-    function calculateDynamicPoints(rats, wallet) {
-        const base = rats * 10;
-        const elapsed = getElapsedHours();
-        
-        let multiplier = 1.0;
-        if (rats >= 10) multiplier = 1.25;
-        else if (rats >= 5) multiplier = 1.1;
-
-        const accumulated = Math.floor(rats * elapsed * multiplier);
-        
-        // Cargar deducciones locales
-        const deductionsStr = localStorage.getItem('og_rats_deductions');
-        let deductedAmount = 0;
-        if (deductionsStr) {
-            const decObj = JSON.parse(deductionsStr);
-            const userDecs = decObj[wallet.toLowerCase()];
-            if (userDecs && Array.isArray(userDecs)) {
-                deductedAmount = userDecs.reduce((sum, r) => sum + (r.amount || 0), 0);
+    async function processLeaderboard(forceRefresh = false) {
+        if (!forceRefresh) {
+            const cached = getFromCache("og_rats_live_leaderboard");
+            if (cached) {
+                liveLeaderboard = cached;
+                return;
             }
         }
 
-        return Math.max(0, base + accumulated - deductedAmount);
-    }
+        // Estado cargando en UI
+        if (leaderboardBody && forceRefresh) {
+            leaderboardBody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--neon-cyan);">Cargando ranking en tiempo real de Ronin Network...</td></tr>`;
+        }
 
-    function processLeaderboard() {
-        liveLeaderboard = REAL_HOLDERS_FALLBACK.map(h => {
-            const wallet = h.wallet.toLowerCase();
-            return {
-                wallet,
-                rats: h.rats,
-                points: calculateDynamicPoints(h.rats, wallet)
-            };
-        }).sort((a, b) => b.points - a.points);
+        const liveData = await fetchLiveHolders();
+        if (liveData && liveData.length > 0) {
+            liveLeaderboard = liveData.sort((a, b) => b.rats - a.rats);
+            saveToCache("og_rats_live_leaderboard", liveLeaderboard, 15); // Cachear por 15 minutos
+        } else {
+            // Fallback local
+            liveLeaderboard = REAL_HOLDERS_FALLBACK.map(h => ({
+                wallet: h.wallet.toLowerCase(),
+                rats: h.rats
+            })).sort((a, b) => b.rats - a.rats);
+        }
     }
 
     function renderLeaderboardTable() {
@@ -296,99 +307,32 @@
         const topList = liveLeaderboard.slice(0, LEADERBOARD_DISPLAY_COUNT);
 
         topList.forEach((holder, index) => {
-            const isFav = watchlist.includes(holder.wallet);
             const row = document.createElement('tr');
             
             row.innerHTML = `
                 <td><span class="rank-badge rank-${index + 1}">${index + 1}</span></td>
                 <td class="wallet-cell" title="${holder.wallet}">${shortAddress(holder.wallet)}</td>
-                <td>${holder.rats} 🐀</td>
-                <td class="points-cell text-neon">${holder.points.toLocaleString()}</td>
-                <td>
-                    <button class="btn-fav" data-wallet="${holder.wallet}">
-                        ${isFav ? '⭐' : '☆'}
-                    </button>
-                </td>
+                <td class="text-neon" style="font-family: var(--font-mono); font-weight: 700;">${holder.rats} 🐀</td>
             `;
 
             leaderboardBody.appendChild(row);
         });
-
-        // Eventos para botones de favoritos
-        document.querySelectorAll('.btn-fav').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const w = this.getAttribute('data-wallet');
-                toggleWatchlist(w);
-            });
-        });
     }
 
-
-    // ─── WATCHLIST (FAVORITOS) ───
-
-    function loadWatchlist() {
-        const stored = localStorage.getItem('og_rats_watchlist');
-        watchlist = stored ? JSON.parse(stored) : [];
-        renderWatchlistTags();
-    }
-
-    function renderWatchlistTags() {
-        if (!watchlistTags) return;
-        watchlistTags.innerHTML = "";
-
-        if (watchlist.length === 0) {
-            watchlistTags.innerHTML = `<span class="watchlist-empty">No tienes favoritos aún.</span>`;
-            return;
+    async function refreshLeaderboardData() {
+        const btnRefresh = document.getElementById("btnRefreshLeaderboard");
+        if (btnRefresh) {
+            btnRefresh.disabled = true;
+            btnRefresh.textContent = "⏳ Actualizando...";
         }
 
-        watchlist.forEach(w => {
-            const tag = document.createElement('span');
-            tag.className = 'watchlist-tag';
-            tag.innerHTML = `
-                <span class="tag-label" data-wallet="${w}">${shortAddress(w)}</span>
-                <span class="tag-remove" data-wallet="${w}">&times;</span>
-            `;
-            watchlistTags.appendChild(tag);
-        });
-
-        // Evento de búsqueda rápida
-        document.querySelectorAll('.watchlist-tag .tag-label').forEach(lbl => {
-            lbl.addEventListener('click', function() {
-                const w = this.getAttribute('data-wallet');
-                if (leaderboardSearchInput) {
-                    leaderboardSearchInput.value = w;
-                    searchWalletRank(w);
-                }
-            });
-        });
-
-        // Evento de remover
-        document.querySelectorAll('.watchlist-tag .tag-remove').forEach(rm => {
-            rm.addEventListener('click', function(e) {
-                e.stopPropagation();
-                const w = this.getAttribute('data-wallet');
-                toggleWatchlist(w);
-            });
-        });
-    }
-
-    function toggleWatchlist(wallet) {
-        const clean = wallet.toLowerCase();
-        const index = watchlist.indexOf(clean);
-
-        if (index > -1) {
-            watchlist.splice(index, 1);
-        } else {
-            if (watchlist.length >= 3) {
-                alert("Solo puedes guardar un máximo de 3 favoritos.");
-                return;
-            }
-            watchlist.push(clean);
-        }
-
-        localStorage.setItem('og_rats_watchlist', JSON.stringify(watchlist));
-        renderWatchlistTags();
+        await processLeaderboard(true);
         renderLeaderboardTable();
+
+        if (btnRefresh) {
+            btnRefresh.disabled = false;
+            btnRefresh.textContent = "🔄 Actualizar";
+        }
     }
 
 
@@ -403,7 +347,6 @@
             const matches = clean.match(/0x[a-f0-9]{40}/);
             if (matches) return matches[0];
             
-            // Caso ronin:address
             const roninMatches = clean.match(/ronin:[a-f0-9]{40}/);
             if (roninMatches) return "0x" + roninMatches[0].substring(6);
         }
@@ -428,8 +371,6 @@
         try {
             let ratsBalance = 0;
             
-            // Consultar a través del nodo RPC público oficial de Ronin
-            // Esto asegura que funcione siempre, sin depender de extensiones
             try {
                 const publicProvider = new ethers.JsonRpcProvider("https://api.roninchain.com/rpc");
                 const contract = new ethers.Contract(OGRATS_CONTRACT, ERC721_ABI, publicProvider);
@@ -440,44 +381,27 @@
                 const found = liveLeaderboard.find(h => h.wallet === cleanWallet);
                 ratsBalance = found ? found.rats : 0;
             }
-
-            const points = calculateDynamicPoints(ratsBalance, cleanWallet);
             
-            // Estimar puesto en el ranking ordenado
+            // Estimar puesto en el ranking ordenado por Rats
             const existingIndex = liveLeaderboard.findIndex(h => h.wallet === cleanWallet);
             let rank = "N/A";
             if (existingIndex > -1) {
                 rank = existingIndex + 1;
             } else if (ratsBalance > 0) {
-                const prospectiveIndex = liveLeaderboard.findIndex(e => points > e.points);
+                const prospectiveIndex = liveLeaderboard.findIndex(e => ratsBalance > e.rats);
                 rank = prospectiveIndex === -1 ? liveLeaderboard.length + 1 : prospectiveIndex + 1;
             }
-
-            const isFav = watchlist.includes(cleanWallet);
 
             searchResultCard.innerHTML = `
                 <div class="result-header">
                     <h4>Resultado de Búsqueda</h4>
-                    <button class="btn-fav" id="btnFavSearchResult" data-wallet="${cleanWallet}">
-                        ${isFav ? '★ Favorito' : '☆ Agregar Favoritos'}
-                    </button>
                 </div>
                 <div class="result-body">
                     <div class="result-stat"><span class="stat-lbl">Dirección:</span> <span class="stat-val font-mono">${shortAddress(cleanWallet)}</span></div>
-                    <div class="result-stat"><span class="stat-lbl">Rats:</span> <span class="stat-val">${ratsBalance} 🐀</span></div>
-                    <div class="result-stat"><span class="stat-lbl">Puntos:</span> <span class="stat-val text-neon">${points.toLocaleString()}</span></div>
+                    <div class="result-stat"><span class="stat-lbl">Rats:</span> <span class="stat-val text-neon" style="font-family: var(--font-mono); font-weight: 700;">${ratsBalance} 🐀</span></div>
                     <div class="result-stat"><span class="stat-lbl">Puesto Estimado:</span> <span class="stat-val rank-badge rank-searched">${rank}</span></div>
                 </div>
             `;
-
-            const btnFavSearch = document.getElementById('btnFavSearchResult');
-            if (btnFavSearch) {
-                btnFavSearch.addEventListener('click', function() {
-                    const w = this.getAttribute('data-wallet');
-                    toggleWatchlist(w);
-                    searchWalletRank(w); // Recargar estado visual
-                });
-            }
 
         } catch (err) {
             console.error("Error en búsqueda:", err);
@@ -581,9 +505,8 @@
     async function checkConnectionOnLoad() {
         loadMarketStats();
         
-        // Cargar Leaderboard y favoritos
-        processLeaderboard();
-        loadWatchlist();
+        // Cargar ranking en tiempo real de Ronin
+        await processLeaderboard();
         renderLeaderboardTable();
         
         if (window.ronin) {
@@ -606,7 +529,7 @@
         }
     }
 
-    // Eventos del buscador de Leaderboard
+    // Eventos del buscador de Leaderboard y actualización
     if (btnSearchLeaderboard && leaderboardSearchInput) {
         btnSearchLeaderboard.addEventListener('click', function() {
             searchWalletRank(leaderboardSearchInput.value);
@@ -616,6 +539,11 @@
                 searchWalletRank(leaderboardSearchInput.value);
             }
         });
+    }
+
+    const btnRefreshLeaderboard = document.getElementById("btnRefreshLeaderboard");
+    if (btnRefreshLeaderboard) {
+        btnRefreshLeaderboard.addEventListener('click', refreshLeaderboardData);
     }
 
     if (btnConnectWallet) {
