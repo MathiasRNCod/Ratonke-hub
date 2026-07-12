@@ -11,62 +11,60 @@
     const RONKEVERSE_CONTRACT = "0x810b42d75150824b2253b2161a09d3753a1de019"; 
     const ERC721_ABI = ["function balanceOf(address owner) view returns (uint256)"];
 
-    const LAUNCH_TIMESTAMP = new Date("2026-06-06T00:00:00-03:00").getTime();
-    const LEADERBOARD_DISPLAY_COUNT = 15;
+    const LEADERBOARD_DISPLAY_COUNT = 50;
 
-    // Fallback de holders originales (wallet + rats)
+    // Holders actualizados al 12/Jul/2026 desde el explorador de Ronin
     const REAL_HOLDERS_FALLBACK = [
-        { wallet: "0x058132d1641c564095f3774d5b40e41118dd4b15", rats: 134 },
-        { wallet: "0xb1672022977a2f509ce51a2407596ba9325761af", rats: 100 },
-        { wallet: "0xbc12d832cc649130de1096a1a6dacebfd9f4c19d", rats: 99 },
-        { wallet: "0x726c79c2d9653fe0e4110e7c70a9f382bcdfb634", rats: 91 },
-        { wallet: "0x78442549af860a37d437678a0bd5555a9406fa6c", rats: 88 },
-        { wallet: "0x97035e8847b58568ce6a18e7e0c0ac68fafa6138", rats: 68 },
-        { wallet: "0x4093517c5870c548a100605f0d5b1cbc1b53e2b1", rats: 59 },
-        { wallet: "0xdf2ff905e999b182fbb8429e3aa05663d3320d34", rats: 58 },
+        { wallet: "0x73829b57804c93edeabcd893c4cdfa8a094b98fa", rats: 246 },
+        { wallet: "0x78442549af860a37d437678a0bd5555a9406fa6c", rats: 124 },
+        { wallet: "0x74cc635dd1b5453e3dbb2b0f48920821cbe0d820", rats: 121 },
+        { wallet: "0x726c79c2d9653fe0e4110e7c70a9f382bcdfb634", rats: 83 },
+        { wallet: "0x4093517c5870c548a100605f0d5b1cbc1b53e2b1", rats: 74 },
+        { wallet: "0xb1672022977a2f509ce51a2407596ba9325761af", rats: 69 },
+        { wallet: "0xa4f421c508a2f1348275c0e73a1fe7d3eff83fef", rats: 66 },
+        { wallet: "0x058132d1641c564095f3774d5b40e41118dd4b15", rats: 64 },
+        { wallet: "0x6de8bdd19cd76b89ea2eb1ab6d9b245433652ef9", rats: 61 },
+        { wallet: "0x0c2f5a5931a9cd50c9d22832bd5748a6fee5f849", rats: 52 },
         { wallet: "0x87e8335ce820f2c7f4f61eb90b07769d931c15ce", rats: 45 },
-        { wallet: "0xa4f421c508a2f1348275c0e73a1fe7d3eff83fef", rats: 40 },
-        { wallet: "0x0c2f5a5931a9cd50c9d22832bd5748a6fee5f849", rats: 35 },
-        { wallet: "0xd97d53f1e531b3ddd0a730c7bb191d15d41bc1a0", rats: 33 },
+        { wallet: "0xd351d31d354d7c27d9cae8e674d8c5a111816833", rats: 44 },
+        { wallet: "0x9ad24da7fffb46a13399c4e5c21e1142f21eda50", rats: 43 },
+        { wallet: "0xfcf64cb28c4fde1806f8cf1b9fb7eb81b3d476c7", rats: 36 },
         { wallet: "0xe821c24c79a31cf42bcc4e3cb92cbf0c2e6df6cf", rats: 31 },
-        { wallet: "0xcc96f1221e7bf4d51df410e0c3baed3536f1a53c", rats: 31 },
-        { wallet: "0x9ccc2bca511df812724d9d80ba2a05a76d7c06a4", rats: 28 },
-        { wallet: "0x7e7cfa348df006c5fb879723431e76884640c5d0", rats: 25 },
-        { wallet: "0x09377ba0eb4e005561c842774b12f78991ef8c1d", rats: 25 },
-        { wallet: "0x64fda10b9a653eccc2c17f6ed0c6f2ca41698f32", rats: 24 },
-        { wallet: "0x0be8ad2dfee7f1a3fd8f7af66b4ac6e92f31d219", rats: 24 },
+        { wallet: "0x9ccc2bca511df812724d9d80ba2a05a76d7c06a4", rats: 29 },
+        { wallet: "0xb7ea94f09f680eb246d3cfcf47d9b4b8acdf23be", rats: 23 },
         { wallet: "0xad7bbb655df1862d755f5b5361ab086402fade16", rats: 22 },
         { wallet: "0xfd1a8e4851e64cc3f5d61fdf35fdcff7047cfb75", rats: 21 },
-        { wallet: "0x9ccff351c83204323bba5b9098d5a023527f1e76", rats: 20 },
-        { wallet: "0x9ad24da7fffb46a13399c4e5c21e1142f21eda50", rats: 20 },
-        { wallet: "0x6de8bdd19cd76b89ea2eb1ab6d9b245433652ef9", rats: 20 },
+        { wallet: "0xddc104538662d0bfd0420a80227421f6c8cfaa43", rats: 20 },
         { wallet: "0x223c5dd8db5c1bb1a3847525ff4563e4d78f9f69", rats: 20 },
-        { wallet: "0x18deaf264ed6bf01f1de6a57c6ce84811f58beb1", rats: 20 },
-        { wallet: "0xd2ef0f7ab27ca3f474285bb38918671058684999", rats: 19 },
+        { wallet: "0x97035e8847b58568ce6a18e7e0c0ac68fafa6138", rats: 19 },
+        { wallet: "0x266b0fad82daeafbcfdf95b3c71b8c43dc5c3039", rats: 19 },
+        { wallet: "0xf0229d63dcf9a0880839f426dbc8f6a051ad4e98", rats: 17 },
+        { wallet: "0xdf2ff905e999b182fbb8429e3aa05663d3320d34", rats: 17 },
+        { wallet: "0x6f1cb4219eb23c33fb8f5017a4e9c0b6180fa5ab", rats: 17 },
+        { wallet: "0x18deaf264ed6bf01f1de6a57c6ce84811f58beb1", rats: 17 },
         { wallet: "0xffa0f2b13c928fb9bfb84e127594b035ae832062", rats: 16 },
-        { wallet: "0xf3ebef48227a8ccb7fa376096a97448fbef41fbe", rats: 15 },
         { wallet: "0xe8e8ee5a70986ff1c84c6ccdb8e0512a4a122e43", rats: 15 },
-        { wallet: "0xe8e8ee5a70986ff1c84c6ccdb8e0512a4a122e43", rats: 15 },
-        { wallet: "0xe812f82ce6eeac242035cab5ccba3889c56ca776", rats: 15 },
         { wallet: "0xd86826b7db9dc71c7b49b55049dfec558c15f883", rats: 15 },
-        { wallet: "0xc56cab75f4bc3bb99513a3dfcda7840ccffda559", rats: 15 },
-        { wallet: "0xbe5ab9b99ed64204a5be7658a2777a2107c4c636", rats: 15 },
-        { wallet: "0x3d59d5679f04300fd1a9c5406bc02e6724631454", rats: 15 },
-        { wallet: "0xec9e915ef7d7b2b366a49b3f3b95da92a1a8fcdc", rats: 14 },
-        { wallet: "0x17430f9b237d5d48bf9e5a75291c25ace99236de", rats: 14 },
-        { wallet: "0x6491b6b923a68be74ec664eb390039c75e569e44", rats: 13 },
-        { wallet: "0x298e5dd73995fb5f8708ac1c0b4da1c13dbd6dab", rats: 13 },
+        { wallet: "0x2888d9a455335fbbe6cb5c73ae9b034e138415c1", rats: 15 },
+        { wallet: "0x6bb9b421b70f486e358cc379da873e3786f2a1aa", rats: 14 },
+        { wallet: "0x7e7cfa348df006c5fb879723431e76884640c5d0", rats: 13 },
+        { wallet: "0x1cdcbd5de75bceda4e3c929afa5c7269b8b81303", rats: 13 },
         { wallet: "0xe78209461cf584292d88add36040a2b119c3721a", rats: 12 },
-        { wallet: "0xf0229d63dcf9a0880839f426dbc8f6a051ad4e98", rats: 11 },
-        { wallet: "0x4339faeac769054857611920358d4b1ab5ee83aa", rats: 11 },
-        { wallet: "0x15c37772a4cd89d750e5a9a5ba550539a87f5967", rats: 11 },
-        { wallet: "0xfcf64cb28c4fde1806f8cf1b9fb7eb81b3d476c7", rats: 10 },
-        { wallet: "0xed17034f524de9ee706dc42d4ce52e121e6dd0ea", rats: 10 },
-        { wallet: "0xc81d8b5e724f3bffe87f0a302c83fe56d1ab6949", rats: 10 },
-        { wallet: "0x6bb9b421b70f486e358cc379da873e3786f2a1aa", rats: 10 },
-        { wallet: "0x5596a3d0fcb90581d424c29e280aeb4c3a31d0c7", rats: 10 },
+        { wallet: "0xdf69777d4f8ebba16509d71dc3eee9faf40e7294", rats: 12 },
+        { wallet: "0x6491b6b923a68be74ec664eb390039c75e569e44", rats: 12 },
+        { wallet: "0x0be8ad2dfee7f1a3fd8f7af66b4ac6e92f31d219", rats: 12 },
+        { wallet: "0x298e5dd73995fb5f8708ac1c0b4da1c13dbd6dab", rats: 11 },
+        { wallet: "0xbc12d832cc649130de1096a1a6dacebfd9f4c19d", rats: 10 },
+        { wallet: "0x324c174630d2ed9fa83c240fc4b5608cf1d24a3e", rats: 10 },
+        { wallet: "0x0443101e16ea5fde0fea69657e83c3ebb74fb53a", rats: 10 },
         { wallet: "0xfbfc242463dab877caf8cd7a7ba6cf8607bebde1", rats: 9 },
-        { wallet: "0xe7b2f7ee4e3c69f33f684cfa29a15e74da8cbafe", rats: 9 }
+        { wallet: "0x981368eeefd5d284d47ce98d40bd2bf7139c417e", rats: 8 },
+        { wallet: "0x14f789c0d80a46e5def7800416fe74f45eb2f77f", rats: 8 },
+        { wallet: "0x09377ba0eb4e005561c842774b12f78991ef8c1d", rats: 8 },
+        { wallet: "0xbe5ab9b99ed64204a5be7658a2777a2107c4c636", rats: 7 },
+        { wallet: "0x56b487863fbeca3699224739b9f38bb5c7f2bbf6", rats: 7 },
+        { wallet: "0xfce309b0d1ed15069be75e8350938e787ec2ac90", rats: 6 },
+        { wallet: "0xb91e67fb0140077774dec79f7d273a3096702554", rats: 6 },
     ];
 
     // ─── Estado Global de la dApp ───
@@ -78,7 +76,10 @@
 
     // Leaderboard state
     let liveLeaderboard = [];
-    let watchlist = [];
+
+    // Limpiar datos viejos de localStorage para forzar recarga
+    localStorage.removeItem("og_rats_custom_leaderboard");
+    localStorage.removeItem("og_rats_live_leaderboard");
 
     // ─── Elementos DOM ───
     const btnConnectWallet = document.getElementById('btnConnectWallet');
@@ -251,42 +252,35 @@
     // ─── LÓGICA DE ACTUALIZACIÓN EN TIEMPO REAL POR RPC Y LEADERBOARD ───
 
     const PUBLIC_RPC_ENDPOINT = "https://api.roninchain.com/rpc";
+    // Reutilizar un solo proveedor para todas las consultas
+    const sharedProvider = new ethers.JsonRpcProvider(PUBLIC_RPC_ENDPOINT);
+    const sharedContract = new ethers.Contract(OGRATS_CONTRACT, ERC721_ABI, sharedProvider);
 
     async function queryNFTBalanceDirect(walletAddress) {
         try {
-            const publicProvider = new ethers.JsonRpcProvider(PUBLIC_RPC_ENDPOINT);
-            const contract = new ethers.Contract(OGRATS_CONTRACT, ERC721_ABI, publicProvider);
-            const count = await contract.balanceOf(walletAddress);
+            const count = await sharedContract.balanceOf(walletAddress);
             return Number(count);
         } catch (err) {
-            console.error(`Error de consulta RPC directa para la wallet ${walletAddress}:`, err);
+            console.warn(`RPC: fallo para ${walletAddress}`, err.message);
             return null;
         }
     }
 
-    async function processLeaderboard(forceRefresh = false) {
-        // Cargar ranking persistido localmente si existe y no se forzó actualización
-        const stored = localStorage.getItem("og_rats_custom_leaderboard");
-        if (stored && !forceRefresh) {
-            liveLeaderboard = JSON.parse(stored);
-            return;
-        }
+    // Utilidad: esperar N milisegundos
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-        // Si es la primera carga y no hay nada en LocalStorage, inicializar con el fallback
-        if (!stored) {
-            liveLeaderboard = REAL_HOLDERS_FALLBACK.map(h => ({
-                wallet: h.wallet.toLowerCase(),
-                rats: h.rats
-            })).sort((a, b) => b.rats - a.rats);
-            localStorage.setItem("og_rats_custom_leaderboard", JSON.stringify(liveLeaderboard));
-        }
+    async function processLeaderboard() {
+        // Siempre cargar del fallback fresco al inicio (ya limpiamos localStorage arriba)
+        liveLeaderboard = REAL_HOLDERS_FALLBACK.map(h => ({
+            wallet: h.wallet.toLowerCase(),
+            rats: h.rats
+        })).sort((a, b) => b.rats - a.rats);
     }
 
     function renderLeaderboardTable() {
         if (!leaderboardBody) return;
         leaderboardBody.innerHTML = "";
 
-        // Cortamos para mostrar únicamente los mejores 15
         const topList = liveLeaderboard.slice(0, LEADERBOARD_DISPLAY_COUNT);
 
         topList.forEach((holder, index) => {
@@ -309,26 +303,42 @@
             btnRefresh.textContent = "⏳ Actualizando...";
         }
 
-        // Si forzamos actualizar, consultamos los saldos de todos los holders que están
-        // en nuestra lista local directamente por RPC
         try {
-            if (leaderboardBody) {
-                leaderboardBody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--neon-cyan);">Actualizando ranking directo desde la Blockchain (Ronin)...</td></tr>`;
-            }
+            const total = liveLeaderboard.length;
+            const BATCH_SIZE = 3;
+            let completed = 0;
 
-            const updatePromises = liveLeaderboard.map(async (holder) => {
-                const liveRats = await queryNFTBalanceDirect(holder.wallet);
-                if (liveRats !== null) {
-                    holder.rats = liveRats;
+            // Consultar en lotes de 3 wallets con 1s de pausa entre lotes
+            for (let i = 0; i < total; i += BATCH_SIZE) {
+                const batch = liveLeaderboard.slice(i, i + BATCH_SIZE);
+                
+                const results = await Promise.all(
+                    batch.map(holder => queryNFTBalanceDirect(holder.wallet))
+                );
+
+                results.forEach((liveRats, idx) => {
+                    if (liveRats !== null) {
+                        liveLeaderboard[i + idx].rats = liveRats;
+                    }
+                });
+
+                completed += batch.length;
+
+                // Mostrar progreso en la tabla
+                if (leaderboardBody) {
+                    leaderboardBody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--neon-cyan);">
+                        ⏳ Consultando blockchain... ${completed}/${total} wallets
+                    </td></tr>`;
                 }
-                return holder;
-            });
 
-            await Promise.all(updatePromises);
+                // Esperar 1 segundo antes del siguiente lote (evitar 429)
+                if (i + BATCH_SIZE < total) {
+                    await sleep(1000);
+                }
+            }
             
-            // Re-ordenar y persistir los cambios actualizados
+            // Re-ordenar y renderizar
             liveLeaderboard.sort((a, b) => b.rats - a.rats);
-            localStorage.setItem("og_rats_custom_leaderboard", JSON.stringify(liveLeaderboard));
         } catch (e) {
             console.error("Fallo al actualizar ranking por RPC:", e);
         }
