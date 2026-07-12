@@ -488,6 +488,11 @@
 
     // ─── LÓGICA WEB3 (RONIN WALLET) ───
 
+    function shortAddress(addr) {
+        if (!addr) return "";
+        return addr.slice(0, 6) + "..." + addr.slice(-4);
+    }
+
     async function queryNFTCount(contractAddress, userAddress, provider) {
         try {
             const contract = new ethers.Contract(contractAddress, ERC721_ABI, provider);
