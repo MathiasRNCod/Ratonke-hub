@@ -11,7 +11,7 @@
     const RONKEVERSE_CONTRACT = "0x810b42d75150824b2253b2161a09d3753a1de019"; 
     const ERC721_ABI = ["function balanceOf(address owner) view returns (uint256)"];
 
-    const LEADERBOARD_DISPLAY_COUNT = 50;
+    const LEADERBOARD_DISPLAY_COUNT = 10;
 
     // Holders actualizados al 12/Jul/2026 desde el explorador de Ronin
     const REAL_HOLDERS_FALLBACK = [
