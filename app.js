@@ -397,6 +397,17 @@
     function validateAddress(input) {
         if (typeof input !== "string") return null;
         let clean = input.trim().toLowerCase();
+        
+        // Si el usuario pega una URL del explorador de Ronin, extraer el hash de la wallet
+        if (clean.includes("/address/") || clean.includes("/token/")) {
+            const matches = clean.match(/0x[a-f0-9]{40}/);
+            if (matches) return matches[0];
+            
+            // Caso ronin:address
+            const roninMatches = clean.match(/ronin:[a-f0-9]{40}/);
+            if (roninMatches) return "0x" + roninMatches[0].substring(6);
+        }
+
         if (clean.startsWith("ronin:")) {
             clean = "0x" + clean.substring(6);
         }
@@ -411,26 +422,28 @@
         }
 
         if (!searchResultCard) return;
-        searchResultCard.innerHTML = `<div class="search-loading">Consultando balance en Ronin...</div>`;
+        searchResultCard.innerHTML = `<div class="search-loading">Consultando balance en Ronin Network...</div>`;
         searchResultCard.classList.remove('hidden');
 
         try {
-            // Intentar consultar saldo real en red Ronin (si está disponible window.ronin)
             let ratsBalance = 0;
-            if (window.ronin) {
-                const provider = new ethers.BrowserProvider(window.ronin.provider);
-                const contract = new ethers.Contract(OGRATS_CONTRACT, ERC721_ABI, provider);
+            
+            // Consultar a través del nodo RPC público oficial de Ronin
+            // Esto asegura que funcione siempre, sin depender de extensiones
+            try {
+                const publicProvider = new ethers.JsonRpcProvider("https://api.roninchain.com/rpc");
+                const contract = new ethers.Contract(OGRATS_CONTRACT, ERC721_ABI, publicProvider);
                 const count = await contract.balanceOf(cleanWallet);
                 ratsBalance = Number(count);
-            } else {
-                // Fallback de búsqueda local si no hay provider inyectado
+            } catch (rpcErr) {
+                console.warn("Fallo al conectar con el RPC público, intentando fallback local...", rpcErr);
                 const found = liveLeaderboard.find(h => h.wallet === cleanWallet);
                 ratsBalance = found ? found.rats : 0;
             }
 
             const points = calculateDynamicPoints(ratsBalance, cleanWallet);
             
-            // Estimar puesto
+            // Estimar puesto en el ranking ordenado
             const existingIndex = liveLeaderboard.findIndex(h => h.wallet === cleanWallet);
             let rank = "N/A";
             if (existingIndex > -1) {
