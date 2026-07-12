@@ -248,55 +248,37 @@
     }
 
 
-    // ─── LÓGICA DE ACTUALIZACIÓN EN TIEMPO REAL Y LEADERBOARD ───
+    // ─── LÓGICA DE ACTUALIZACIÓN EN TIEMPO REAL POR RPC Y LEADERBOARD ───
 
-    async function fetchLiveHolders() {
-        const targetUrl = `https://explorer.roninchain.com/api/v2/tokens/${OGRATS_CONTRACT}/holders`;
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
-        
+    const PUBLIC_RPC_ENDPOINT = "https://api.roninchain.com/rpc";
+
+    async function queryNFTBalanceDirect(walletAddress) {
         try {
-            const res = await fetch(proxyUrl);
-            if (!res.ok) throw new Error("CORS Proxy Failure");
-            
-            const json = await res.json();
-            const data = JSON.parse(json.contents);
-            
-            if (data && data.items) {
-                return data.items.map(item => ({
-                    wallet: item.address.hash.toLowerCase(),
-                    rats: Number(item.value)
-                }));
-            }
-        } catch (e) {
-            console.error("Fallo al traer holders en vivo desde el explorador:", e);
+            const publicProvider = new ethers.JsonRpcProvider(PUBLIC_RPC_ENDPOINT);
+            const contract = new ethers.Contract(OGRATS_CONTRACT, ERC721_ABI, publicProvider);
+            const count = await contract.balanceOf(walletAddress);
+            return Number(count);
+        } catch (err) {
+            console.error(`Error de consulta RPC directa para la wallet ${walletAddress}:`, err);
+            return null;
         }
-        return null;
     }
 
     async function processLeaderboard(forceRefresh = false) {
-        if (!forceRefresh) {
-            const cached = getFromCache("og_rats_live_leaderboard");
-            if (cached) {
-                liveLeaderboard = cached;
-                return;
-            }
+        // Cargar ranking persistido localmente si existe y no se forzó actualización
+        const stored = localStorage.getItem("og_rats_custom_leaderboard");
+        if (stored && !forceRefresh) {
+            liveLeaderboard = JSON.parse(stored);
+            return;
         }
 
-        // Estado cargando en UI
-        if (leaderboardBody && forceRefresh) {
-            leaderboardBody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--neon-cyan);">Cargando ranking en tiempo real de Ronin Network...</td></tr>`;
-        }
-
-        const liveData = await fetchLiveHolders();
-        if (liveData && liveData.length > 0) {
-            liveLeaderboard = liveData.sort((a, b) => b.rats - a.rats);
-            saveToCache("og_rats_live_leaderboard", liveLeaderboard, 15); // Cachear por 15 minutos
-        } else {
-            // Fallback local
+        // Si es la primera carga y no hay nada en LocalStorage, inicializar con el fallback
+        if (!stored) {
             liveLeaderboard = REAL_HOLDERS_FALLBACK.map(h => ({
                 wallet: h.wallet.toLowerCase(),
                 rats: h.rats
             })).sort((a, b) => b.rats - a.rats);
+            localStorage.setItem("og_rats_custom_leaderboard", JSON.stringify(liveLeaderboard));
         }
     }
 
@@ -304,6 +286,7 @@
         if (!leaderboardBody) return;
         leaderboardBody.innerHTML = "";
 
+        // Cortamos para mostrar únicamente los mejores 15
         const topList = liveLeaderboard.slice(0, LEADERBOARD_DISPLAY_COUNT);
 
         topList.forEach((holder, index) => {
@@ -326,7 +309,30 @@
             btnRefresh.textContent = "⏳ Actualizando...";
         }
 
-        await processLeaderboard(true);
+        // Si forzamos actualizar, consultamos los saldos de todos los holders que están
+        // en nuestra lista local directamente por RPC
+        try {
+            if (leaderboardBody) {
+                leaderboardBody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--neon-cyan);">Actualizando ranking directo desde la Blockchain (Ronin)...</td></tr>`;
+            }
+
+            const updatePromises = liveLeaderboard.map(async (holder) => {
+                const liveRats = await queryNFTBalanceDirect(holder.wallet);
+                if (liveRats !== null) {
+                    holder.rats = liveRats;
+                }
+                return holder;
+            });
+
+            await Promise.all(updatePromises);
+            
+            // Re-ordenar y persistir los cambios actualizados
+            liveLeaderboard.sort((a, b) => b.rats - a.rats);
+            localStorage.setItem("og_rats_custom_leaderboard", JSON.stringify(liveLeaderboard));
+        } catch (e) {
+            console.error("Fallo al actualizar ranking por RPC:", e);
+        }
+
         renderLeaderboardTable();
 
         if (btnRefresh) {
@@ -342,7 +348,6 @@
         if (typeof input !== "string") return null;
         let clean = input.trim().toLowerCase();
         
-        // Si el usuario pega una URL del explorador de Ronin, extraer el hash de la wallet
         if (clean.includes("/address/") || clean.includes("/token/")) {
             const matches = clean.match(/0x[a-f0-9]{40}/);
             if (matches) return matches[0];
@@ -369,28 +374,32 @@
         searchResultCard.classList.remove('hidden');
 
         try {
-            let ratsBalance = 0;
+            // Consultar saldo actual directamente en blockchain por RPC
+            const ratsBalance = await queryNFTBalanceDirect(cleanWallet) || 0;
             
-            try {
-                const publicProvider = new ethers.JsonRpcProvider("https://api.roninchain.com/rpc");
-                const contract = new ethers.Contract(OGRATS_CONTRACT, ERC721_ABI, publicProvider);
-                const count = await contract.balanceOf(cleanWallet);
-                ratsBalance = Number(count);
-            } catch (rpcErr) {
-                console.warn("Fallo al conectar con el RPC público, intentando fallback local...", rpcErr);
-                const found = liveLeaderboard.find(h => h.wallet === cleanWallet);
-                ratsBalance = found ? found.rats : 0;
-            }
-            
-            // Estimar puesto en el ranking ordenado por Rats
+            // Integrar o actualizar la wallet buscada dentro del ranking local
             const existingIndex = liveLeaderboard.findIndex(h => h.wallet === cleanWallet);
-            let rank = "N/A";
             if (existingIndex > -1) {
-                rank = existingIndex + 1;
+                // Actualizar saldo
+                liveLeaderboard[existingIndex].rats = ratsBalance;
             } else if (ratsBalance > 0) {
-                const prospectiveIndex = liveLeaderboard.findIndex(e => ratsBalance > e.rats);
-                rank = prospectiveIndex === -1 ? liveLeaderboard.length + 1 : prospectiveIndex + 1;
+                // Agregar wallet nueva al ranking
+                liveLeaderboard.push({
+                    wallet: cleanWallet,
+                    rats: ratsBalance
+                });
             }
+
+            // Re-ordenar y guardar ranking modificado
+            liveLeaderboard.sort((a, b) => b.rats - a.rats);
+            localStorage.setItem("og_rats_custom_leaderboard", JSON.stringify(liveLeaderboard));
+
+            // Actualizar la tabla para mostrar la posición de la wallet inyectada
+            renderLeaderboardTable();
+
+            // Encontrar puesto final
+            const finalIndex = liveLeaderboard.findIndex(h => h.wallet === cleanWallet);
+            const rank = finalIndex > -1 ? finalIndex + 1 : "N/A";
 
             searchResultCard.innerHTML = `
                 <div class="result-header">
@@ -399,7 +408,7 @@
                 <div class="result-body">
                     <div class="result-stat"><span class="stat-lbl">Dirección:</span> <span class="stat-val font-mono">${shortAddress(cleanWallet)}</span></div>
                     <div class="result-stat"><span class="stat-lbl">Rats:</span> <span class="stat-val text-neon" style="font-family: var(--font-mono); font-weight: 700;">${ratsBalance} 🐀</span></div>
-                    <div class="result-stat"><span class="stat-lbl">Puesto Estimado:</span> <span class="stat-val rank-badge rank-searched">${rank}</span></div>
+                    <div class="result-stat"><span class="stat-lbl">Puesto en Ranking:</span> <span class="stat-val rank-badge rank-searched">${rank}</span></div>
                 </div>
             `;
 
