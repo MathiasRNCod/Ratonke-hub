@@ -1,19 +1,25 @@
 /* ═══════════════════════════════════════════════
    RATONKE HUB — App Logic
-   Sprint 0: Navegación + scroll animations
+   Sprint 1: Conexión de Ronin Wallet + Animaciones
    ═══════════════════════════════════════════════ */
 
 (function () {
     'use strict';
 
-    // ─── Mobile Nav Toggle ───
+    // ─── Estado Web3 Global ───
+    let userAddress = null;
+    let userBalance = null;
+    let isHolder = false;
+
+    // ─── Elementos DOM ───
+    const btnConnectWallet = document.getElementById('btnConnectWallet');
     const navToggle = document.getElementById('navToggle');
     const navLinks = document.getElementById('navLinks');
 
+    // ─── Mobile Nav Toggle ───
     if (navToggle && navLinks) {
         navToggle.addEventListener('click', function () {
             navLinks.classList.toggle('open');
-            // Animate hamburger → X
             const spans = navToggle.querySelectorAll('span');
             const isOpen = navLinks.classList.contains('open');
             spans[0].style.transform = isOpen ? 'rotate(45deg) translate(5px, 5px)' : '';
@@ -21,7 +27,6 @@
             spans[2].style.transform = isOpen ? 'rotate(-45deg) translate(5px, -5px)' : '';
         });
 
-        // Close nav when clicking a link
         navLinks.querySelectorAll('.nav-link').forEach(function (link) {
             link.addEventListener('click', function () {
                 navLinks.classList.remove('open');
@@ -38,12 +43,11 @@
     const navLinkAll = document.querySelectorAll('.nav-link');
 
     function updateActiveNav() {
-        var scrollY = window.scrollY + 100;
-
+        const scrollY = window.scrollY + 100;
         sections.forEach(function (section) {
-            var top = section.offsetTop;
-            var height = section.offsetHeight;
-            var id = section.getAttribute('id');
+            const top = section.offsetTop;
+            const height = section.offsetHeight;
+            const id = section.getAttribute('id');
 
             if (scrollY >= top && scrollY < top + height) {
                 navLinkAll.forEach(function (link) {
@@ -55,15 +59,13 @@
             }
         });
     }
-
     window.addEventListener('scroll', updateActiveNav, { passive: true });
 
     // ─── Scroll Reveal Animations ───
-    var animatedElements = document.querySelectorAll(
+    const animatedElements = document.querySelectorAll(
         '.about-card, .project-card, .community-link, .about-showcase, .about-intro'
     );
-
-    var observer = new IntersectionObserver(
+    const observer = new IntersectionObserver(
         function (entries) {
             entries.forEach(function (entry) {
                 if (entry.isIntersecting) {
@@ -74,23 +76,132 @@
         },
         { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
     );
-
     animatedElements.forEach(function (el) {
         observer.observe(el);
     });
 
     // ─── Header Background on Scroll ───
-    var header = document.querySelector('.site-header');
-    var lastScroll = 0;
-
+    const header = document.querySelector('.site-header');
     window.addEventListener('scroll', function () {
-        var current = window.scrollY;
+        const current = window.scrollY;
         if (current > 50) {
             header.style.borderBottomColor = 'rgba(0, 240, 255, 0.08)';
         } else {
             header.style.borderBottomColor = 'rgba(255, 255, 255, 0.06)';
         }
-        lastScroll = current;
     }, { passive: true });
+
+
+    // ─── LÓGICA WEB3 (RONIN WALLET) ───
+
+    const CONTRACT_ADDRESS = "0x953e34637cc596b8195eb7fb83305402d3b9d000"; // Contrato OG Rats
+    const CONTRACT_ABI = ["function balanceOf(address owner) view returns (uint256)"];
+
+    function shortAddress(addr) {
+        if (!addr) return "";
+        return addr.slice(0, 6) + "..." + addr.slice(-4);
+    }
+
+    async function checkHoldings(address, provider) {
+        try {
+            const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+            const nftCount = await contract.balanceOf(address);
+            return Number(nftCount) > 0;
+        } catch (err) {
+            console.error("Error al consultar balance de NFTs:", err);
+            return false;
+        }
+    }
+
+    function updateWalletUI() {
+        if (!btnConnectWallet) return;
+        
+        const label = btnConnectWallet.querySelector('.wallet-label');
+        const icon = btnConnectWallet.querySelector('.wallet-icon');
+
+        if (userAddress) {
+            // Estado conectado
+            label.textContent = shortAddress(userAddress);
+            icon.textContent = "🦊"; // Cambiamos el icono a conectado
+
+            btnConnectWallet.classList.add('wallet-connected');
+
+            // Ajustar visual de holders
+            if (isHolder) {
+                btnConnectWallet.classList.add('is-holder');
+                icon.textContent = "👑"; // Icono de holder coronado
+                label.textContent = `${shortAddress(userAddress)} (Holder)`;
+            } else {
+                btnConnectWallet.classList.remove('is-holder');
+            }
+        } else {
+            // Estado desconectado
+            label.textContent = "Conectar Ronin";
+            icon.textContent = "🔌";
+            btnConnectWallet.classList.remove('wallet-connected');
+            btnConnectWallet.classList.remove('is-holder');
+        }
+    }
+
+    async function handleWalletConnection() {
+        if (!window.ronin) {
+            alert("Instala la extensión de Ronin Wallet para poder conectar tu billetera.");
+            return;
+        }
+
+        try {
+            const provider = new ethers.BrowserProvider(window.ronin.provider);
+            
+            // Si ya estamos conectados y hacemos clic, desconectamos (toggle de sesión simple)
+            if (userAddress) {
+                userAddress = null;
+                userBalance = null;
+                isHolder = false;
+                updateWalletUI();
+                return;
+            }
+
+            // Solicitar cuentas
+            const accounts = await provider.send("eth_requestAccounts", []);
+            userAddress = accounts[0];
+
+            // Cargar balance de RON
+            const balanceWei = await provider.getBalance(userAddress);
+            userBalance = ethers.formatEther(balanceWei);
+
+            // Verificar si tiene NFTs de OG Rats
+            isHolder = await checkHoldings(userAddress, provider);
+
+            updateWalletUI();
+        } catch (error) {
+            console.error("Error durante la conexión de la wallet:", error);
+        }
+    }
+
+    // Comprobar si ya hay cuentas autorizadas previamente
+    async function checkConnectionOnLoad() {
+        if (window.ronin) {
+            try {
+                const provider = new ethers.BrowserProvider(window.ronin.provider);
+                const accounts = await provider.send("eth_accounts", []);
+                if (accounts.length > 0) {
+                    userAddress = accounts[0];
+                    const balanceWei = await provider.getBalance(userAddress);
+                    userBalance = ethers.formatEther(balanceWei);
+                    isHolder = await checkHoldings(userAddress, provider);
+                    updateWalletUI();
+                }
+            } catch (err) {
+                console.error("Error al comprobar la conexión inicial:", err);
+            }
+        }
+    }
+
+    if (btnConnectWallet) {
+        btnConnectWallet.addEventListener('click', handleWalletConnection);
+    }
+
+    // Inicializar estados iniciales al cargar la página
+    window.addEventListener('load', checkConnectionOnLoad);
 
 })();
