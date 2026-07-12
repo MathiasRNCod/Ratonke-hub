@@ -252,15 +252,31 @@
     // ─── LÓGICA DE ACTUALIZACIÓN EN TIEMPO REAL POR RPC Y LEADERBOARD ───
 
     const PUBLIC_RPC_ENDPOINT = "https://api.roninchain.com/rpc";
-    // Reutilizar un solo proveedor — red estática para evitar eth_chainId (400)
-    const roninNetwork = new ethers.Network("ronin", 2020);
-    const sharedProvider = new ethers.JsonRpcProvider(PUBLIC_RPC_ENDPOINT, roninNetwork, { staticNetwork: true });
-    const sharedContract = new ethers.Contract(OGRATS_CONTRACT, ERC721_ABI, sharedProvider);
+    // Selector de balanceOf(address) = 0x70a08231
+    const BALANCE_OF_SELECTOR = "0x70a08231";
 
     async function queryNFTBalanceDirect(walletAddress) {
         try {
-            const count = await sharedContract.balanceOf(walletAddress);
-            return Number(count);
+            // Construir calldata: balanceOf(address) con la dirección paddeada a 32 bytes
+            const paddedAddress = walletAddress.toLowerCase().replace("0x", "").padStart(64, "0");
+            const callData = BALANCE_OF_SELECTOR + paddedAddress;
+
+            const response = await fetch(PUBLIC_RPC_ENDPOINT, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    jsonrpc: "2.0",
+                    method: "eth_call",
+                    params: [{ to: OGRATS_CONTRACT, data: callData }, "latest"],
+                    id: 1
+                })
+            });
+
+            const json = await response.json();
+            if (json.result) {
+                return parseInt(json.result, 16);
+            }
+            return null;
         } catch (err) {
             console.warn(`RPC: fallo para ${walletAddress}`, err.message);
             return null;
