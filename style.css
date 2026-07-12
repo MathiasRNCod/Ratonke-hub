@@ -1182,7 +1182,188 @@ img {
 
     .result-body {
         grid-template-columns: 1fr;
+     }
+}
+
+/* ─── MURO SOCIAL ON-CHAIN (CYBERPUNK STYLING) ─── */
+.section-social-wall {
+    padding: 100px 0;
+    background: linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-dark) 100%);
+    border-top: 1px solid var(--border-subtle);
+}
+
+.social-wall-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 40px;
+    margin-top: 48px;
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Formulario */
+.post-form-card, .messages-container {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    height: fit-content;
+}
+
+.post-form-card h3, .messages-container h3 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 24px;
+    color: var(--text-primary);
+    border-left: 4px solid var(--neon-cyan);
+    padding-left: 12px;
+}
+
+.post-input-container textarea {
+    width: 100%;
+    height: 140px;
+    background: var(--bg-deep);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    resize: none;
+    transition: all var(--duration) var(--ease-out);
+    margin-bottom: 12px;
+}
+
+.post-input-container textarea:focus:not(:disabled) {
+    outline: none;
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.15);
+}
+
+.post-input-container textarea:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.input-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+#charCounter {
+    font-size: 0.85rem;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+}
+
+.wall-status-msg {
+    font-size: 0.85rem;
+    color: var(--neon-magenta);
+    background: rgba(255, 0, 127, 0.05);
+    border: 1px dashed rgba(255, 0, 127, 0.2);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    text-align: center;
+    line-height: 1.4;
+}
+
+.wall-status-msg.success {
+    color: var(--neon-cyan);
+    background: rgba(0, 240, 255, 0.05);
+    border-color: rgba(0, 240, 255, 0.2);
+}
+
+/* Mensajes */
+.messages-container {
+    max-height: 600px;
+    display: flex;
+    flex-direction: column;
+}
+
+.messages-list {
+    overflow-y: auto;
+    flex: 1;
+    padding-right: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 300px;
+}
+
+/* Scrollbar personalizado para los mensajes */
+.messages-list::-webkit-scrollbar {
+    width: 6px;
+}
+.messages-list::-webkit-scrollbar-track {
+    background: var(--bg-deep);
+    border-radius: var(--radius-sm);
+}
+.messages-list::-webkit-scrollbar-thumb {
+    background: var(--border-subtle);
+    border-radius: var(--radius-sm);
+}
+.messages-list::-webkit-scrollbar-thumb:hover {
+    background: var(--neon-cyan);
+}
+
+.messages-loading, .messages-empty {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 40px 0;
+    font-style: italic;
+    font-size: 0.95rem;
+}
+
+.message-item {
+    background: var(--bg-deep);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    transition: border-color 0.3s ease;
+    animation: fade-up 0.4s var(--ease-out) both;
+}
+
+.message-item:hover {
+    border-color: rgba(0, 240, 255, 0.2);
+}
+
+.message-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 8px;
+}
+
+.message-sender {
+    font-family: var(--font-mono);
+    color: var(--neon-cyan);
+    font-weight: 600;
+}
+
+.message-time {
+    color: var(--text-muted);
+}
+
+.message-content {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--text-primary);
+    word-break: break-word;
+}
+
+@media (max-width: 900px) {
+    .social-wall-wrapper {
+        grid-template-columns: 1fr;
+        gap: 30px;
     }
 }
+
 
 

@@ -261,6 +261,41 @@
         </section>
 
         <!-- ═══════════════════════════════════════════ -->
+        <!-- SOCIAL WALL (MURO SOCIAL ON-CHAIN) -->
+        <!-- ═══════════════════════════════════════════ -->
+        <section class="section-social-wall" id="social-wall">
+            <div class="container">
+                <h2 class="section-title">Muro Social On-Chain</h2>
+                <p class="section-desc">Exclusivo para Holders de OG Rats. Dejá tu mensaje permanente en la Blockchain de Ronin.</p>
+
+                <div class="social-wall-wrapper">
+                    <!-- Formulario de Publicación -->
+                    <div class="post-form-card">
+                        <h3>Publicar Mensaje</h3>
+                        <div class="post-input-container">
+                            <textarea id="wallMessageInput" placeholder="Escribí un mensaje cyberpunk... (máx. 280 caracteres)" maxlength="280" disabled></textarea>
+                            <div class="input-footer">
+                                <span id="charCounter">0 / 280</span>
+                                <button id="btnPostMessage" class="btn btn-primary" disabled>Publicar en Blockchain</button>
+                            </div>
+                        </div>
+                        <div id="wallStatusMsg" class="wall-status-msg">
+                            🔌 Conectá tu wallet y verificá tu balance de OG Rats para publicar.
+                        </div>
+                    </div>
+
+                    <!-- Mensajes Publicados -->
+                    <div class="messages-container">
+                        <h3>Mensajes del Muro</h3>
+                        <div id="wallMessagesList" class="messages-list">
+                            <div class="messages-loading">Cargando mensajes desde Ronin Network...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════ -->
         <!-- COMMUNITY -->
         <!-- ═══════════════════════════════════════════ -->
         <section class="section-community" id="community">
@@ -328,6 +363,6 @@
 
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
-    <script src="app.js?v=5"></script>
+    <script src="app.js?v=6"></script>
 </body>
 </html>

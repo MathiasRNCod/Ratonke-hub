@@ -1,0 +1,78 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "C:\\Users\\mathi\\OneDrive\\Desktop\\Inicio ANT\\ratonke-hub\\contracts\\MockERC721.sol": {
+      "lastModificationDate": 1783898811493,
+      "contentHash": "91fdbe5e6ad906fd8fa3cbd6d2abef34",
+      "sourceName": "contracts/MockERC721.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "MockERC721"
+      ]
+    },
+    "C:\\Users\\mathi\\OneDrive\\Desktop\\Inicio ANT\\ratonke-hub\\contracts\\OGRatsWall.sol": {
+      "lastModificationDate": 1783898796428,
+      "contentHash": "6f346fb34432247e4e4291871a173cf6",
+      "sourceName": "contracts/OGRatsWall.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "IERC721",
+        "OGRatsWall"
+      ]
+    }
+  }
+}

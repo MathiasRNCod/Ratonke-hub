@@ -439,10 +439,173 @@
                 </div>
             `;
 
-        } catch (err) {
-            console.error("Error en búsqueda:", err);
-            searchResultCard.innerHTML = `<div class="search-error">No se pudo consultar el saldo en la red. Intenta de nuevo.</div>`;
+    }
+
+
+    // ─── LÓGICA DEL MURO SOCIAL ON-CHAIN ───
+
+    // Dirección del contrato OGRatsWall en Saigon Testnet (se completará al desplegar)
+    let OGRATS_WALL_CONTRACT = ""; 
+    const OGRATS_WALL_ABI = [
+        "function postMessage(string memory _message) external",
+        "function getMessages() external view returns (tuple(uint256 id, address sender, string message, uint256 timestamp)[])"
+    ];
+
+    // Elementos del Muro
+    const wallMessageInput = document.getElementById("wallMessageInput");
+    const btnPostMessage = document.getElementById("btnPostMessage");
+    const charCounter = document.getElementById("charCounter");
+    const wallStatusMsg = document.getElementById("wallStatusMsg");
+    const wallMessagesList = document.getElementById("wallMessagesList");
+
+    // Manejar contador de caracteres
+    if (wallMessageInput && charCounter) {
+        wallMessageInput.addEventListener("input", function() {
+            const count = this.value.length;
+            charCounter.textContent = `${count} / 280`;
+        });
+    }
+
+    // Actualizar UI del formulario de publicación según elegibilidad
+    function updateWallUIStatus() {
+        if (!wallMessageInput || !btnPostMessage || !wallStatusMsg) return;
+
+        if (!userAddress) {
+            wallMessageInput.disabled = true;
+            btnPostMessage.disabled = true;
+            wallStatusMsg.textContent = "🔌 Conectá tu wallet de Ronin para verificar tu elegibilidad y publicar.";
+            wallStatusMsg.className = "wall-status-msg";
+            return;
         }
+
+        if (ogRatsCount > 0) {
+            wallMessageInput.disabled = false;
+            btnPostMessage.disabled = false;
+            wallStatusMsg.textContent = "✅ Wallet conectada. Estatus: Holder verificado. ¡Podés publicar!";
+            wallStatusMsg.className = "wall-status-msg success";
+        } else {
+            wallMessageInput.disabled = true;
+            btnPostMessage.disabled = true;
+            wallStatusMsg.textContent = "❌ No posees NFTs de OG Rats. Debes ser holder de OG Rats para publicar.";
+            wallStatusMsg.className = "wall-status-msg";
+        }
+    }
+
+    // Consultar y listar los mensajes desde la blockchain
+    async function loadWallMessages() {
+        if (!wallMessagesList) return;
+
+        if (!OGRATS_WALL_CONTRACT) {
+            wallMessagesList.innerHTML = `
+                <div class="messages-empty">
+                    🚩 El contrato del Muro Social no ha sido desplegado aún.
+                    <br><small style="color: var(--text-muted);">Desplegá el contrato en Saigon para habilitar el feed.</small>
+                </div>
+            `;
+            return;
+        }
+
+        try {
+            wallMessagesList.innerHTML = `<div class="messages-loading">Consultando mensajes en Ronin Network...</div>`;
+
+            // Usamos RPC directa para leer sin requerir extensión conectada
+            const publicProvider = new ethers.JsonRpcProvider(PUBLIC_RPC_ENDPOINT);
+            const contract = new ethers.Contract(OGRATS_WALL_CONTRACT, OGRATS_WALL_ABI, publicProvider);
+
+            const rawMessages = await contract.getMessages();
+            
+            if (!rawMessages || rawMessages.length === 0) {
+                wallMessagesList.innerHTML = `<div class="messages-empty">Aún no hay mensajes en el muro. ¡Sé el primero! 🐀</div>`;
+                return;
+            }
+
+            wallMessagesList.innerHTML = "";
+            
+            // Mostrar los mensajes de más nuevos a más viejos (reversa)
+            const sortedMessages = [...rawMessages].reverse();
+
+            sortedMessages.forEach(msg => {
+                const date = new Date(Number(msg.timestamp) * 1000).toLocaleString();
+                const item = document.createElement("div");
+                item.className = "message-item";
+                item.innerHTML = `
+                    <div class="message-header">
+                        <span class="message-sender" title="${msg.sender}">${shortAddress(msg.sender)}</span>
+                        <span class="message-time">${date}</span>
+                    </div>
+                    <div class="message-content">${escapeHTML(msg.message)}</div>
+                `;
+                wallMessagesList.appendChild(item);
+            });
+
+        } catch (err) {
+            console.error("Error al cargar mensajes del muro:", err);
+            wallMessagesList.innerHTML = `<div class="messages-error" style="color: var(--neon-magenta); text-align: center; padding: 20px;">Fallo al conectar con el contrato.</div>`;
+        }
+    }
+
+    // Publicar un mensaje nuevo on-chain usando la wallet conectada
+    async function submitWallMessage() {
+        if (!window.ronin || !userAddress || !OGRATS_WALL_CONTRACT) return;
+
+        const text = wallMessageInput.value.trim();
+        if (!text) {
+            alert("El mensaje no puede estar vacío.");
+            return;
+        }
+
+        if (text.length > 280) {
+            alert("El mensaje excede los 280 caracteres.");
+            return;
+        }
+
+        try {
+            btnPostMessage.disabled = true;
+            btnPostMessage.textContent = "✍️ Firmando...";
+
+            const provider = new ethers.BrowserProvider(window.ronin.provider);
+            const signer = await provider.getSigner();
+            const contract = new ethers.Contract(OGRATS_WALL_CONTRACT, OGRATS_WALL_ABI, signer);
+
+            const tx = await contract.postMessage(text);
+            btnPostMessage.textContent = "⏳ Procesando transacción...";
+            
+            await tx.wait(); // Esperar confirmación del bloque
+            
+            wallMessageInput.value = "";
+            if (charCounter) charCounter.textContent = "0 / 280";
+            
+            alert("¡Mensaje publicado con éxito en la Blockchain! 🐀🎉");
+            
+            // Recargar muro
+            loadWallMessages();
+
+        } catch (err) {
+            console.error("Error al enviar mensaje:", err);
+            alert("Transacción cancelada o fallida al publicar.");
+        } finally {
+            btnPostMessage.disabled = false;
+            btnPostMessage.textContent = "Publicar en Blockchain";
+            updateWallUIStatus();
+        }
+    }
+
+    // Utilidad simple para sanitizar texto
+    function escapeHTML(str) {
+        return str.replace(/[&<>'"]/g, 
+            tag => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            }[tag] || tag)
+        );
+    }
+
+    // Escuchar botón de publicar
+    if (btnPostMessage) {
+        btnPostMessage.addEventListener("click", submitWallMessage);
     }
 
 
@@ -502,6 +665,9 @@
                 walletInfoCard.classList.remove('visible');
             }
         }
+
+        // Actualizar formulario del muro social
+        updateWallUIStatus();
     }
 
     async function handleWalletConnection() {
@@ -544,6 +710,10 @@
         // Cargar ranking en tiempo real de Ronin
         await processLeaderboard();
         renderLeaderboardTable();
+
+        // Cargar mensajes iniciales del muro social
+        loadWallMessages();
+        updateWallUIStatus();
         
         if (window.ronin) {
             try {
