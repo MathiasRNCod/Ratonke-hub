@@ -252,8 +252,9 @@
     // ─── LÓGICA DE ACTUALIZACIÓN EN TIEMPO REAL POR RPC Y LEADERBOARD ───
 
     const PUBLIC_RPC_ENDPOINT = "https://api.roninchain.com/rpc";
-    // Reutilizar un solo proveedor para todas las consultas
-    const sharedProvider = new ethers.JsonRpcProvider(PUBLIC_RPC_ENDPOINT);
+    // Reutilizar un solo proveedor — red estática para evitar eth_chainId (400)
+    const roninNetwork = new ethers.Network("ronin", 2020);
+    const sharedProvider = new ethers.JsonRpcProvider(PUBLIC_RPC_ENDPOINT, roninNetwork, { staticNetwork: true });
     const sharedContract = new ethers.Contract(OGRATS_CONTRACT, ERC721_ABI, sharedProvider);
 
     async function queryNFTBalanceDirect(walletAddress) {
