@@ -458,6 +458,10 @@
                 </div>
             `;
 
+        } catch (err) {
+            console.error("Error en búsqueda:", err);
+            searchResultCard.innerHTML = `<div class="search-error">No se pudo consultar el saldo en la red. Intenta de nuevo.</div>`;
+        }
     }
 
 
