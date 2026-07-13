@@ -498,9 +498,12 @@
     function updateWallUIStatus() {
         if (!wallMessageInput || !btnPostMessage || !wallStatusMsg) return;
 
+        const btnClaimStatic = document.getElementById("btnClaimMockNFT");
+
         if (!userAddress) {
             wallMessageInput.disabled = true;
             btnPostMessage.disabled = true;
+            if (btnClaimStatic) btnClaimStatic.disabled = true;
             wallStatusMsg.textContent = "🔌 Conectá tu wallet de Ronin para verificar tu elegibilidad y publicar.";
             wallStatusMsg.className = "wall-status-msg";
             return;
@@ -509,54 +512,58 @@
         if (ogRatsCount > 0) {
             wallMessageInput.disabled = false;
             btnPostMessage.disabled = false;
+            if (btnClaimStatic) btnClaimStatic.disabled = false;
             wallStatusMsg.textContent = "✅ Wallet conectada. Estatus: Holder verificado. ¡Podés publicar!";
             wallStatusMsg.className = "wall-status-msg success";
         } else {
             wallMessageInput.disabled = true;
             btnPostMessage.disabled = true;
-            
-            // Si está en Saigon Testnet, permitir reclamar un NFT de prueba gratis
+            if (btnClaimStatic) btnClaimStatic.disabled = false;
+
             const isSaigon = OGRATS_CONTRACT.toLowerCase() === "0x3f5ca0243fd07ec647d072a150e15ec44913fa2f";
             if (isSaigon) {
-                wallStatusMsg.innerHTML = `
-                    ❌ No posees NFTs de OG Rats de prueba en Saigon.
-                    <br><button id="btnClaimMockNFT" class="btn btn-ghost" style="margin-top: 10px; border-color: var(--neon-cyan); color: var(--neon-cyan);">
-                        🎁 Reclamar OG Rat de Prueba Gratis
-                    </button>
-                `;
-                wallStatusMsg.className = "wall-status-msg";
-                
-                // Asignar listener para el botón de reclamo
-                const btnClaim = document.getElementById("btnClaimMockNFT");
-                if (btnClaim) {
-                    btnClaim.addEventListener("click", claimMockNFT);
-                }
+                wallStatusMsg.textContent = "❌ No posees NFTs de OG Rats de prueba en Saigon. ¡Usa el botón de arriba para reclamar uno gratis!";
             } else {
                 wallStatusMsg.textContent = "❌ No posees NFTs de OG Rats. Debes ser holder de OG Rats para publicar.";
-                wallStatusMsg.className = "wall-status-msg";
             }
+            wallStatusMsg.className = "wall-status-msg";
         }
     }
 
     // Reclamar un NFT de prueba en Saigon Testnet
     async function claimMockNFT() {
-        if (!window.ronin || !userAddress) return;
-
-        const btnClaim = document.getElementById("btnClaimMockNFT");
-        if (btnClaim) {
-            btnClaim.disabled = true;
-            btnClaim.textContent = "⏳ Reclamando...";
+        if (!window.ronin) {
+            alert("Por favor conecta tu Ronin Wallet primero.");
+            return;
+        }
+        if (!userAddress) {
+            alert("Conectá tu wallet primero para poder reclamar el NFT de prueba.");
+            return;
         }
 
+        // Verificar si la wallet del usuario está configurada en Saigon Testnet (202601)
         try {
             const provider = new ethers.BrowserProvider(window.ronin.provider);
+            const network = await provider.getNetwork();
+            
+            if (Number(network.chainId) !== 202601) {
+                alert("⚠️ Cambia la red de tu Ronin Wallet a 'Saigon Testnet' para poder reclamar el NFT de prueba gratis.");
+                return;
+            }
+
+            const btnClaim = document.getElementById("btnClaimMockNFT");
+            if (btnClaim) {
+                btnClaim.disabled = true;
+                btnClaim.textContent = "⏳ Reclamando...";
+            }
+
             const signer = await provider.getSigner();
             const mockContract = new ethers.Contract(OGRATS_CONTRACT, MOCK_NFT_ABI, signer);
 
             // Llamar a setBalance(userAddress, 1) en el contrato Mock
             const tx = await mockContract.setBalance(userAddress, 1);
             
-            if (btnClaim) btnClaim.textContent = "⏳ Esperando confirmación de bloque...";
+            if (btnClaim) btnClaim.textContent = "⏳ Procesando transacción...";
             await tx.wait();
 
             alert("🎁 ¡OG Rat de prueba reclamado con éxito en Saigon! Ahora podés escribir en el muro.");
@@ -568,10 +575,12 @@
 
         } catch (err) {
             console.error("Fallo al reclamar NFT Mock:", err);
-            alert("No se pudo reclamar el NFT de prueba.");
+            alert("No se pudo reclamar el NFT de prueba. Asegúrate de tener saldo de Saigon RON para el gas.");
+        } finally {
+            const btnClaim = document.getElementById("btnClaimMockNFT");
             if (btnClaim) {
                 btnClaim.disabled = false;
-                btnClaim.textContent = "🎁 Reclamar OG Rat de Prueba Gratis";
+                btnClaim.textContent = "🎁 Reclamar NFT Saigon";
             }
         }
     }
@@ -856,6 +865,11 @@
 
     if (btnConnectWallet) {
         btnConnectWallet.addEventListener('click', handleWalletConnection);
+    }
+
+    const btnClaimMockNFT = document.getElementById("btnClaimMockNFT");
+    if (btnClaimMockNFT) {
+        btnClaimMockNFT.addEventListener("click", claimMockNFT);
     }
 
     if (btnCloseWalletCard) {

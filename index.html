@@ -276,7 +276,10 @@
                             <textarea id="wallMessageInput" placeholder="Escribí un mensaje cyberpunk... (máx. 280 caracteres)" maxlength="280" disabled></textarea>
                             <div class="input-footer">
                                 <span id="charCounter">0 / 280</span>
-                                <button id="btnPostMessage" class="btn btn-primary" disabled>Publicar en Blockchain</button>
+                                <div style="display: flex; gap: 8px;">
+                                    <button id="btnClaimMockNFT" class="btn btn-ghost" style="border-color: var(--neon-magenta); color: var(--neon-magenta);">🎁 Reclamar NFT Saigon</button>
+                                    <button id="btnPostMessage" class="btn btn-primary" disabled>Publicar en Blockchain</button>
+                                </div>
                             </div>
                         </div>
                         <div id="wallStatusMsg" class="wall-status-msg">
@@ -363,6 +366,6 @@
 
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
-    <script src="app.js?v=9"></script>
+    <script src="app.js?v=10"></script>
 </body>
 </html>
