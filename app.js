@@ -709,7 +709,7 @@
 
         } catch (err) {
             console.error("Error al enviar mensaje:", err);
-            alert("Transacción cancelada o fallida al publicar.");
+            alert("Error al publicar: " + (err.reason || err.message || err));
         } finally {
             btnPostMessage.disabled = false;
             btnPostMessage.textContent = "Publicar en Blockchain";
