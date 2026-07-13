@@ -593,8 +593,14 @@
             const signer = await provider.getSigner();
             const mockContract = new ethers.Contract(OGRATS_CONTRACT, MOCK_NFT_ABI, signer);
 
+            // Ronin exige un mínimo de 20 Gwei de maxPriorityFeePerGas
+            const gasOverrides = {
+                maxPriorityFeePerGas: ethers.parseUnits("20", "gwei"),
+                maxFeePerGas: ethers.parseUnits("30", "gwei")
+            };
+
             // Llamar a setBalance(userAddress, 1) en el contrato Mock
-            const tx = await mockContract.setBalance(userAddress, 1);
+            const tx = await mockContract.setBalance(userAddress, 1, gasOverrides);
             
             if (btnClaim) btnClaim.textContent = "⏳ Procesando transacción...";
             await tx.wait();
@@ -694,7 +700,13 @@
             const signer = await provider.getSigner();
             const contract = new ethers.Contract(OGRATS_WALL_CONTRACT, OGRATS_WALL_ABI, signer);
 
-            const tx = await contract.postMessage(text);
+            // Ronin exige un mínimo de 20 Gwei de maxPriorityFeePerGas
+            const gasOverrides = {
+                maxPriorityFeePerGas: ethers.parseUnits("20", "gwei"),
+                maxFeePerGas: ethers.parseUnits("30", "gwei")
+            };
+
+            const tx = await contract.postMessage(text, gasOverrides);
             btnPostMessage.textContent = "⏳ Procesando transacción...";
             
             await tx.wait(); // Esperar confirmación del bloque
