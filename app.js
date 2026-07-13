@@ -593,8 +593,9 @@
             const signer = await provider.getSigner();
             const mockContract = new ethers.Contract(OGRATS_CONTRACT, MOCK_NFT_ABI, signer);
 
-            // Forzar transacción legacy con gasPrice fijo para evitar que la wallet lo reemplace con 1 Gwei
+            // Forzar transacción legacy (tipo 0) con gasPrice fijo para evitar EIP-1559
             const gasOverrides = {
+                type: 0,
                 gasPrice: ethers.parseUnits("20", "gwei")
             };
 
@@ -699,8 +700,9 @@
             const signer = await provider.getSigner();
             const contract = new ethers.Contract(OGRATS_WALL_CONTRACT, OGRATS_WALL_ABI, signer);
 
-            // Forzar transacción legacy con gasPrice fijo para evitar que la wallet lo reemplace con 1 Gwei
+            // Forzar transacción legacy (tipo 0) con gasPrice fijo para evitar EIP-1559
             const gasOverrides = {
+                type: 0,
                 gasPrice: ethers.parseUnits("20", "gwei")
             };
 
