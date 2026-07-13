@@ -516,9 +516,9 @@
             btnPostMessage.disabled = false;
             if (btnClaimStatic) btnClaimStatic.disabled = false;
             if (isSaigon) {
-                wallStatusMsg.textContent = "✅ Red Saigon (Pruebas): Muro libre sin control de NFT. ¡Podés publicar!";
+                wallStatusMsg.textContent = "✅ Red: Saigon Testnet. Muro libre de pruebas habilitado. ¡Podés publicar!";
             } else {
-                wallStatusMsg.textContent = "✅ Wallet conectada. Estatus: Holder verificado. ¡Podés publicar!";
+                wallStatusMsg.textContent = "✅ Red: Ronin Mainnet. Estatus: Holder verificado. ¡Podés publicar!";
             }
             wallStatusMsg.className = "wall-status-msg success";
         } else {
@@ -526,7 +526,7 @@
             btnPostMessage.disabled = true;
             if (btnClaimStatic) btnClaimStatic.disabled = false;
 
-            wallStatusMsg.textContent = "❌ No posees NFTs de OG Rats. Debes ser holder de OG Rats para publicar.";
+            wallStatusMsg.innerHTML = `❌ Red detectada: <strong>Ronin Mainnet</strong>.<br>No posees NFTs de OG Rats en esta billetera. Cambiá la red a <strong>Saigon Testnet</strong> en los ajustes de tu billetera o presioná el botón de reclamo.`;
             wallStatusMsg.className = "wall-status-msg";
         }
     }
