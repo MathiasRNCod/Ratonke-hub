@@ -28,7 +28,7 @@ contract OGRatsWall {
     function postMessage(string calldata _message) external {
         require(bytes(_message).length > 0, "Message cannot be empty");
         require(bytes(_message).length <= 280, "Message exceeds 280 characters");
-        require(ogRatsNFT.balanceOf(msg.sender) > 0, "Must hold an OG Rat NFT to post");
+        // require(ogRatsNFT.balanceOf(msg.sender) > 0, "Must hold an OG Rat NFT to post");
 
         Message memory newMsg = Message({
             id: nextMessageId,

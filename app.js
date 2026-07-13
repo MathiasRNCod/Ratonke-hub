@@ -260,9 +260,9 @@
     function detectAndSwitchNetwork(chainId) {
         const id = Number(chainId);
         if (id === 202601) {
-            // Saigon Testnet
-            OGRATS_CONTRACT = "0x3F5Ca0243Fd07ec647D072a150e15eC44913Fa2f";
-            OGRATS_WALL_CONTRACT = "0xB06FB4D5f3449f3ae9ee58873b972505e83a18FB";
+            // Saigon Testnet (Mock sin restricciones de NFT)
+            OGRATS_CONTRACT = "0xB9504993a693CC10b4AE275b09dAF72650b8C1a2";
+            OGRATS_WALL_CONTRACT = "0x791406A24670C089e09F52bF30Abd2198d27a6CD";
             PUBLIC_RPC_ENDPOINT = "https://saigon-testnet.roninchain.com/rpc";
             console.log("dApp conmutada a: Saigon Testnet");
         } else {
@@ -509,23 +509,24 @@
             return;
         }
 
-        if (ogRatsCount > 0) {
+        const isSaigon = OGRATS_CONTRACT.toLowerCase() === "0xb9504993a693cc10b4ae275b09daf72650b8c1a2";
+
+        if (ogRatsCount > 0 || isSaigon) {
             wallMessageInput.disabled = false;
             btnPostMessage.disabled = false;
             if (btnClaimStatic) btnClaimStatic.disabled = false;
-            wallStatusMsg.textContent = "✅ Wallet conectada. Estatus: Holder verificado. ¡Podés publicar!";
+            if (isSaigon) {
+                wallStatusMsg.textContent = "✅ Red Saigon (Pruebas): Muro libre sin control de NFT. ¡Podés publicar!";
+            } else {
+                wallStatusMsg.textContent = "✅ Wallet conectada. Estatus: Holder verificado. ¡Podés publicar!";
+            }
             wallStatusMsg.className = "wall-status-msg success";
         } else {
             wallMessageInput.disabled = true;
             btnPostMessage.disabled = true;
             if (btnClaimStatic) btnClaimStatic.disabled = false;
 
-            const isSaigon = OGRATS_CONTRACT.toLowerCase() === "0x3f5ca0243fd07ec647d072a150e15ec44913fa2f";
-            if (isSaigon) {
-                wallStatusMsg.textContent = "❌ No posees NFTs de OG Rats de prueba en Saigon. ¡Usa el botón de arriba para reclamar uno gratis!";
-            } else {
-                wallStatusMsg.textContent = "❌ No posees NFTs de OG Rats. Debes ser holder de OG Rats para publicar.";
-            }
+            wallStatusMsg.textContent = "❌ No posees NFTs de OG Rats. Debes ser holder de OG Rats para publicar.";
             wallStatusMsg.className = "wall-status-msg";
         }
     }
