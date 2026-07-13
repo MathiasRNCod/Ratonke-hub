@@ -9,7 +9,7 @@ module.exports = {
     saigon: {
       url: "https://saigon-testnet.roninchain.com/rpc",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-      chainId: 2021
+      chainId: 202601
     }
   }
 };

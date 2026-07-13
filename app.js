@@ -6,10 +6,12 @@
 (function () {
     'use strict';
 
-    // ─── CONSTANTES DEL LEADERBOARD ───
-    const OGRATS_CONTRACT = "0x953e34637cc596b8195eb7fb83305402d3b9d000"; 
+    // ─── CONSTANTES Y VARIABLES DEL LEADERBOARD ───
+    let OGRATS_CONTRACT = "0x953e34637cc596b8195eb7fb83305402d3b9d000"; 
     const RONKEVERSE_CONTRACT = "0x810b42d75150824b2253b2161a09d3753a1de019"; 
     const ERC721_ABI = ["function balanceOf(address owner) view returns (uint256)"];
+
+    let PUBLIC_RPC_ENDPOINT = "https://api.roninchain.com/rpc";
 
     const LEADERBOARD_DISPLAY_COUNT = 10;
 
@@ -251,9 +253,26 @@
 
     // ─── LÓGICA DE ACTUALIZACIÓN EN TIEMPO REAL POR RPC Y LEADERBOARD ───
 
-    const PUBLIC_RPC_ENDPOINT = "https://api.roninchain.com/rpc";
     // Selector de balanceOf(address) = 0x70a08231
     const BALANCE_OF_SELECTOR = "0x70a08231";
+
+    // Función para conmutar las direcciones de contrato según la red conectada
+    function detectAndSwitchNetwork(chainId) {
+        const id = Number(chainId);
+        if (id === 202601) {
+            // Saigon Testnet
+            OGRATS_CONTRACT = "0x3F5Ca0243Fd07ec647D072a150e15eC44913Fa2f";
+            OGRATS_WALL_CONTRACT = "0xB06FB4D5f3449f3ae9ee58873b972505e83a18FB";
+            PUBLIC_RPC_ENDPOINT = "https://saigon-testnet.roninchain.com/rpc";
+            console.log("dApp conmutada a: Saigon Testnet");
+        } else {
+            // Ronin Mainnet (Default)
+            OGRATS_CONTRACT = "0x953e34637cc596b8195eb7fb83305402d3b9d000";
+            OGRATS_WALL_CONTRACT = ""; // Aún no desplegado en Mainnet
+            PUBLIC_RPC_ENDPOINT = "https://api.roninchain.com/rpc";
+            console.log("dApp conmutada a: Ronin Mainnet");
+        }
+    }
 
     async function queryNFTBalanceDirect(walletAddress) {
         try {
@@ -685,12 +704,20 @@
                 ogRatsCount = 0;
                 ronkeverseCount = 0;
                 isHolder = false;
+                
+                // Reiniciar a red por defecto al desconectar
+                detectAndSwitchNetwork(2020);
+                loadWallMessages();
                 updateWalletUI();
                 return;
             }
 
             const accounts = await provider.send("eth_requestAccounts", []);
             userAddress = accounts[0];
+
+            // Detectar red conectada del usuario y configurar contratos dinámicos
+            const network = await provider.getNetwork();
+            detectAndSwitchNetwork(network.chainId);
 
             const balanceWei = await provider.getBalance(userAddress);
             userBalance = ethers.formatEther(balanceWei);
@@ -699,6 +726,9 @@
             ronkeverseCount = await queryNFTCount(RONKEVERSE_CONTRACT, userAddress, provider);
 
             updateWalletUI();
+            
+            // Cargar feed del muro de la red correcta
+            loadWallMessages();
         } catch (error) {
             console.error("Error durante la conexión de la wallet:", error);
         }
@@ -707,11 +737,12 @@
     async function checkConnectionOnLoad() {
         loadMarketStats();
         
-        // Cargar ranking en tiempo real de Ronin
+        // Cargar por defecto la red principal
+        detectAndSwitchNetwork(2020);
+        
         await processLeaderboard();
         renderLeaderboardTable();
 
-        // Cargar mensajes iniciales del muro social
         loadWallMessages();
         updateWallUIStatus();
         
@@ -721,6 +752,10 @@
                 const accounts = await provider.send("eth_accounts", []);
                 if (accounts.length > 0) {
                     userAddress = accounts[0];
+                    
+                    const network = await provider.getNetwork();
+                    detectAndSwitchNetwork(network.chainId);
+
                     const balanceWei = await provider.getBalance(userAddress);
                     userBalance = ethers.formatEther(balanceWei);
 
@@ -728,6 +763,7 @@
                     ronkeverseCount = await queryNFTCount(RONKEVERSE_CONTRACT, userAddress, provider);
 
                     updateWalletUI();
+                    loadWallMessages();
                 }
             } catch (err) {
                 console.error("Error al comprobar la conexión inicial:", err);
