@@ -593,10 +593,9 @@
             const signer = await provider.getSigner();
             const mockContract = new ethers.Contract(OGRATS_CONTRACT, MOCK_NFT_ABI, signer);
 
-            // Ronin exige un mínimo de 20 Gwei de maxPriorityFeePerGas
+            // Forzar transacción legacy con gasPrice fijo para evitar que la wallet lo reemplace con 1 Gwei
             const gasOverrides = {
-                maxPriorityFeePerGas: ethers.parseUnits("20", "gwei"),
-                maxFeePerGas: ethers.parseUnits("30", "gwei")
+                gasPrice: ethers.parseUnits("20", "gwei")
             };
 
             // Llamar a setBalance(userAddress, 1) en el contrato Mock
@@ -700,10 +699,9 @@
             const signer = await provider.getSigner();
             const contract = new ethers.Contract(OGRATS_WALL_CONTRACT, OGRATS_WALL_ABI, signer);
 
-            // Ronin exige un mínimo de 20 Gwei de maxPriorityFeePerGas
+            // Forzar transacción legacy con gasPrice fijo para evitar que la wallet lo reemplace con 1 Gwei
             const gasOverrides = {
-                maxPriorityFeePerGas: ethers.parseUnits("20", "gwei"),
-                maxFeePerGas: ethers.parseUnits("30", "gwei")
+                gasPrice: ethers.parseUnits("20", "gwei")
             };
 
             const tx = await contract.postMessage(text, gasOverrides);
