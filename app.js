@@ -547,8 +547,40 @@
             const network = await provider.getNetwork();
             
             if (Number(network.chainId) !== 202601) {
-                alert("⚠️ Cambia la red de tu Ronin Wallet a 'Saigon Testnet' para poder reclamar el NFT de prueba gratis.");
-                return;
+                // Solicitar cambio de red automático a Saigon (Chain ID: 202601 -> Hex: 0x31757)
+                try {
+                    await window.ronin.provider.request({
+                        method: "wallet_switchEthereumChain",
+                        params: [{ chainId: "0x31757" }]
+                    });
+                    
+                    // Esperar 1.5s para que la extensión procese el cambio y recargar la conexión
+                    await sleep(1500);
+                    alert("Red conmutada a Saigon Testnet. Por favor vuelve a hacer clic en 'Reclamar NFT Saigon' para completar el reclamo.");
+                    return;
+                } catch (switchError) {
+                    // Si la red no está agregada en la wallet, intentar agregarla
+                    if (switchError.code === 4902) {
+                        try {
+                            await window.ronin.provider.request({
+                                method: "wallet_addEthereumChain",
+                                params: [{
+                                    chainId: "0x31757",
+                                    chainName: "Ronin Saigon Testnet",
+                                    nativeCurrency: { name: "RON", symbol: "RON", decimals: 18 },
+                                    rpcUrls: ["https://saigon-testnet.roninchain.com/rpc"],
+                                    blockExplorerUrls: ["https://saigon-explorer.roninchain.com/"]
+                                }]
+                            });
+                            alert("Saigon Testnet agregada a tu wallet. Vuelve a intentar el reclamo.");
+                            return;
+                        } catch (addError) {
+                            console.error("Fallo al agregar red Saigon:", addError);
+                        }
+                    }
+                    alert("⚠️ Por favor cambia manualmente tu billetera a la red 'Saigon Testnet' para continuar.");
+                    return;
+                }
             }
 
             const btnClaim = document.getElementById("btnClaimMockNFT");
